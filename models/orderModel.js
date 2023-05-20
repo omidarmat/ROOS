@@ -2,23 +2,7 @@ const mongoose = require('mongoose');
 
 const Food = require('./foodModel');
 const User = require('./userModel');
-
-const pointSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ['Point'],
-    default: 'Point',
-  },
-  coordinates: {
-    type: [Number],
-    required: true,
-  },
-  address: {
-    type: String,
-    required: true,
-  },
-  description: String,
-});
+const Location = require('./locationModel');
 
 const orderSchema = new mongoose.Schema({
   date: {
@@ -26,7 +10,12 @@ const orderSchema = new mongoose.Schema({
     required: [true, 'An order document must have a date.'],
     default: new Date(),
   },
-  items: Array,
+  items: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Food',
+    },
+  ],
   amounts: [
     {
       type: Number,
@@ -41,7 +30,8 @@ const orderSchema = new mongoose.Schema({
     ref: 'User',
   },
   location: {
-    type: pointSchema,
+    coordinates: [Number],
+    address: String,
   },
   review: {
     type: String,
@@ -74,7 +64,10 @@ orderSchema.pre('save', async function (next) {
 // embed address
 orderSchema.pre('save', async function (next) {
   const user = await User.findById(this.user);
-  this.location = user.locations[user.activeAddress - 1];
+  const locationId = user.locations[user.activeAddress - 1];
+  this.location = await Location.findById(locationId).select(
+    'coordinates address'
+  );
   next();
 });
 

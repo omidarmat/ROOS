@@ -1,23 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const pointSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ['Point'],
-    default: 'Point',
-  },
-  coordinates: {
-    type: [Number],
-    required: true,
-  },
-  address: {
-    type: String,
-    required: true,
-  },
-  description: String,
-});
-
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -74,13 +57,13 @@ const userSchema = new mongoose.Schema({
   },
   locations: [
     {
-      type: pointSchema,
-      required: true,
+      type: mongoose.Schema.ObjectId,
+      ref: 'Location',
     },
   ],
   activeAddress: {
     type: Number,
-    default: 1,
+    default: undefined,
     validate: {
       validator: function (val) {
         return val >= 1 && val <= this.locations.length;
@@ -135,11 +118,20 @@ userSchema.pre('save', function (next) {
 });
 
 // COMMENT all query pre-hook
-// pre-hook: filter out de-activated users
+// filter out de-activated users
 userSchema.pre(/^find/, function (next) {
   this.find({ active: { $ne: false } });
   next();
 });
+
+// populate user locations
+// userSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: 'locations',
+//     select: '-user',
+//   });
+//   next();
+// });
 
 // COMMENT all instance methods
 // check current password for password update

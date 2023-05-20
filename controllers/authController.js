@@ -31,7 +31,6 @@ exports.signup = asyncWrapper(async (req, res) => {
     'birthday',
     'name',
     'phone',
-    'locations',
     'password',
     'passwordConfirm'
   );

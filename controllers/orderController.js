@@ -19,9 +19,19 @@ exports.getAllOrders = asyncWrapper(async (req, res) => {
   });
 });
 
-exports.createOrder = asyncWrapper(async (req, res) => {
-  req.body.user = req.user._id;
-  const order = await Order.create(req.body);
+exports.createOrder = asyncWrapper(async (req, res, next) => {
+  if (req.user.locations.length === 0)
+    return next(
+      new appError(
+        'You have no registered location. Please add locations in your account settings.',
+        400
+      )
+    );
+
+  const filteredBody = filterBody(req.body, 'items', 'amounts');
+
+  filteredBody.user = req.user._id;
+  const order = await Order.create(filteredBody);
 
   res.status(200).json({
     status: '🟢 Success',
@@ -34,7 +44,6 @@ exports.reviewOrder = asyncWrapper(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
 
   if (!req.user._id.equals(order.user._id))
-    // you can never compare (===) to identical ObjectIds
     return next(
       new appError('This order is not yours. You cannot review it.', 403)
     );

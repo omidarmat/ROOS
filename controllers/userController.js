@@ -171,81 +171,81 @@ exports.getMyLocations = (req, res) => {
   });
 };
 
-exports.addLocation = asyncWrapper(async (req, res, next) => {
-  if (!req.body.address)
-    return next(new appError('Please provide an address.', 400));
+// exports.addLocation = asyncWrapper(async (req, res, next) => {
+//   if (!req.body.address)
+//     return next(new appError('Please provide an address.', 400));
 
-  const filteredBody = filterBody(
-    req.body,
-    'coordinates',
-    'address',
-    'description'
-  );
-  const recentAddress = req.user.locations.push(filteredBody);
-  req.user.activeAddress = recentAddress;
-  await req.user.save();
+//   const filteredBody = filterBody(
+//     req.body,
+//     'coordinates',
+//     'address',
+//     'description'
+//   );
+//   const recentAddress = req.user.locations.push(filteredBody);
+//   req.user.activeAddress = recentAddress;
+//   await req.user.save();
 
-  res.status(200).json({
-    status: '🟢 Success',
-    message:
-      'Location added successfully. We will consider this address as your current location. You can change this from your account settings.',
-    user: req.user,
-  });
-});
+//   res.status(200).json({
+//     status: '🟢 Success',
+//     message:
+//       'Location added successfully. We will consider this address as your current location. You can change this from your account settings.',
+//     user: req.user,
+//   });
+// });
 
-exports.updateLocation = asyncWrapper(async (req, res, next) => {
-  // Check if location ID belongs to this user
-  const targetLocationIndex = req.user.locations.findIndex((obj) =>
-    obj._id.equals(req.params.id)
-  );
-  if (targetLocationIndex === -1)
-    return next(new appError('This location ID does not belong to you.', 400));
+// exports.updateLocation = asyncWrapper(async (req, res, next) => {
+//   // Check if location ID belongs to this user
+//   const targetLocationIndex = req.user.locations.findIndex((obj) =>
+//     obj._id.equals(req.params.id)
+//   );
+//   if (targetLocationIndex === -1)
+//     return next(new appError('This location ID does not belong to you.', 400));
 
-  if (!req.body.address)
-    return next(new appError('Please provide an address.', 400));
+//   if (!req.body.address)
+//     return next(new appError('Please provide an address.', 400));
 
-  const filteredBody = filterBody(
-    req.body,
-    'coordinates',
-    'address',
-    'description'
-  );
+//   const filteredBody = filterBody(
+//     req.body,
+//     'coordinates',
+//     'address',
+//     'description'
+//   );
 
-  Object.keys(filteredBody).forEach((field) => {
-    req.user.locations[targetLocationIndex][field] = filteredBody[field];
-  });
+//   Object.keys(filteredBody).forEach((field) => {
+//     req.user.locations[targetLocationIndex][field] = filteredBody[field];
+//   });
 
-  await req.user.save();
+//   await req.user.save();
 
-  res.status(200).json({
-    status: '🟢 Success',
-    message: 'Location updated successfull.',
-    user: req.user,
-  });
-});
+//   res.status(200).json({
+//     status: '🟢 Success',
+//     message: 'Location updated successfull.',
+//     user: req.user,
+//   });
+// });
 
-exports.deleteLocation = asyncWrapper(async (req, res, next) => {
-  // Check if location ID belongs to this user
-  const targetLocation = req.user.locations.find((obj) =>
-    obj._id.equals(req.params.id)
-  );
-  if (!targetLocation)
-    return next(new appError('This location ID does not belong to you.', 400));
+// exports.deleteLocation = asyncWrapper(async (req, res, next) => {
+//   // Check if location ID belongs to this user
+//   const targetLocation = req.user.locations.find((obj) =>
+//     obj._id.equals(req.params.id)
+//   );
+//   if (!targetLocation)
+//     return next(new appError('This location ID does not belong to you.', 400));
 
-  const newLocations = [];
-  req.user.locations.forEach((obj) => {
-    if (!obj._id.equals(req.params.id)) {
-      newLocations.push(obj);
-    }
-  });
+//   const newLocations = [];
+//   req.user.locations.forEach((obj) => {
+//     if (!obj._id.equals(req.params.id)) {
+//       newLocations.push(obj);
+//     }
+//   });
 
-  req.user.locations = newLocations;
-  req.user.activeAddress = newLocations.length;
-  await req.user.save();
+//   req.user.locations = newLocations;
+//   req.user.activeAddress = newLocations.length;
+//   await req.user.save();
 
-  res.status(200).json({
-    status: '🟢 Success',
-    message: 'Location removed successfully.',
-    user: req.user,
-  });
-});
+//   res.status(200).json({
+//     status: '🟢 Success',
+//     message: 'Location removed successfully.',
+//     user: req.user,
+//   });
+// });

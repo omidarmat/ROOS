@@ -1,6 +1,8 @@
 const express = require('express');
 
 const userController = require('./../controllers/userController');
+const locationController = require('./../controllers/locationController');
+const locationRouter = require('./../routes/locationRoutes');
 const authController = require('./../controllers/authController');
 
 const router = express.Router();
@@ -14,15 +16,7 @@ router.route('/logout').get(authController.logout);
 
 router.route('/updateMyPassword').patch(userController.updateMyPassword);
 
-router
-  .route('/myLocations')
-  .get(userController.getMyLocations)
-  .post(userController.addLocation);
-
-router
-  .route('/myLocations/:id')
-  .patch(userController.updateLocation)
-  .delete(userController.deleteLocation);
+router.use('/myLocations', locationRouter);
 
 router
   .route('/')
