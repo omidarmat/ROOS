@@ -16,6 +16,10 @@ router.route('/logout').get(authController.logout);
 
 router.route('/updateMyPassword').patch(userController.updateMyPassword);
 
+router
+  .route('/locations')
+  .get(authController.authorize('admin'), locationController.getAllLocations);
+
 router.use('/myLocations', locationRouter);
 
 router
