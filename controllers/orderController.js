@@ -115,8 +115,22 @@ exports.calcTimedRatingAverage = asyncWrapper(async (req, res, next) => {
 });
 
 // TODO implement aggregation pipeline: get top <n> expensive orders
+const populateUsers = async (stats) => {
+  const usersPromise = stats.map(async (order) => {
+    return await User.findById(order.user).select('name phone');
+  });
+  const users = await Promise.all(usersPromise);
+
+  users.forEach((user, i) => {
+    stats[i].user = user.name;
+    stats[i].phone = user.phone;
+  });
+
+  return stats;
+};
+
 exports.getTopNOrders = asyncWrapper(async (req, res, next) => {
-  const stats = await Order.aggregate([
+  let stats = await Order.aggregate([
     {
       $sort: { cost: -1 },
     },
@@ -131,6 +145,8 @@ exports.getTopNOrders = asyncWrapper(async (req, res, next) => {
     },
   ]);
 
+  stats = await populateUsers(stats);
+
   res.status(200).json({
     status: '🟢 Success',
     message: `List of top ${req.params.n} expensive orders retrieved successfully.`,
@@ -139,7 +155,7 @@ exports.getTopNOrders = asyncWrapper(async (req, res, next) => {
 });
 
 exports.getTimedTopNOrders = asyncWrapper(async (req, res, next) => {
-  const stats = await Order.aggregate([
+  let stats = await Order.aggregate([
     {
       $match: {
         date: {
@@ -162,16 +178,7 @@ exports.getTimedTopNOrders = asyncWrapper(async (req, res, next) => {
     },
   ]);
 
-  const usersPromise = stats.map(async (order) => {
-    return await User.findById(order.user).select('name phone');
-  });
-
-  const users = await Promise.all(usersPromise);
-
-  users.forEach((user, i) => {
-    stats[i].user = user.name;
-    stats[i].phone = user.phone;
-  });
+  stats = await populateUsers(stats);
 
   res.status(200).json({
     status: '🟢 Success',
