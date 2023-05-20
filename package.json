@@ -1,0 +1,18 @@
+{
+  "name": "roos-api",
+  "version": "1.0.0",
+  "description": "An API designed for Restaurant Online Ordering System",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "author": "Omid Armat",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^5.13.17"
+  }
+}
