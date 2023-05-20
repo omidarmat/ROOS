@@ -4,9 +4,15 @@ const filterBody = require('./../utils/filterBody');
 const appError = require('./../utils/appError');
 
 exports.getMyLocations = asyncWrapper(async (req, res, next) => {
+  const locationPromise = req.user.locations.map(async (id) => {
+    return await Location.findById(id);
+  });
+  const locations = await Promise.all(locationPromise);
+
   res.status(200).json({
     status: '🟢 Success',
-    locations: req.user.locations,
+    message: 'Locations retrieved successfully.',
+    locations,
   });
 });
 
@@ -46,16 +52,13 @@ exports.editLocation = asyncWrapper(async (req, res, next) => {
   }
   const targetLocation = await Location.findById(req.params.id);
 
-  const filteredBody = filterBody(
-    req.body,
-    'locations',
-    'address',
-    'description'
-  );
+  const filteredBody = filterBody(req.body, 'address', 'description');
 
   Object.keys(filteredBody).forEach((field) => {
     targetLocation[field] = filteredBody[field];
   });
+
+  targetLocation.location.coordinates = req.body.location.coordinates;
 
   await targetLocation.save();
 
