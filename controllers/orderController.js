@@ -115,4 +115,3 @@ exports.calcTimedRatingAverage = asyncWrapper(async (req, res, next) => {
 });
 
 // TODO implement aggregation pipeline: get top <n> expensive orders
-// CHECKME implementation
