@@ -88,18 +88,6 @@ orderSchema.pre(/^find/, function (next) {
   next();
 });
 
-// COMMENT all aggregate post-hooks
-// orderSchema.post('aggregate', function (docs, next) {
-//   if (docs[0].user) {
-//     docs.forEach(async (doc) => {
-//       const usersPromise = await User.findById(doc.user).select('name');
-//       const users = await Promise.all(usersPromise);
-//       doc.user = user.name;
-//     });
-//   }
-//   next();
-// });
-
 // COMMENT instance methods
 // calculate order cost
 orderSchema.methods.calcCost = function () {
