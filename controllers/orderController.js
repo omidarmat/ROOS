@@ -4,6 +4,7 @@ const appError = require('./../utils/appError');
 const queryManager = require('./../utils/queryManager');
 
 const Order = require('./../models/orderModel');
+const User = require('./../models/userModel');
 
 exports.getAllOrders = asyncWrapper(async (req, res) => {
   const orders = await queryManager(Order, req.query);
@@ -160,6 +161,17 @@ exports.getTimedTopNOrders = asyncWrapper(async (req, res, next) => {
       $limit: req.params.n * 1,
     },
   ]);
+
+  const usersPromise = stats.map(async (order) => {
+    return await User.findById(order.user).select('name phone');
+  });
+
+  const users = await Promise.all(usersPromise);
+
+  users.forEach((user, i) => {
+    stats[i].user = user.name;
+    stats[i].phone = user.phone;
+  });
 
   res.status(200).json({
     status: '🟢 Success',
