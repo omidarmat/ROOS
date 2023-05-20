@@ -18,6 +18,12 @@ router
     orderController.calcTimedRatingAverage
   );
 
+router.route('/topOrders/:n').get(orderController.getTopNOrders);
+
+router
+  .route('/topOrders/:n/:month/:year')
+  .get(orderController.getTimedTopNOrders);
+
 router
   .route('/')
   .get(authController.authorize('admin'), orderController.getAllOrders)

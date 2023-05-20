@@ -81,7 +81,6 @@ exports.calcRatingAverage = asyncWrapper(async (req, res, next) => {
 });
 
 exports.calcTimedRatingAverage = asyncWrapper(async (req, res, next) => {
-  console.log('🟨', req.params);
   const stats = await Order.aggregate([
     {
       $match: {
@@ -115,3 +114,56 @@ exports.calcTimedRatingAverage = asyncWrapper(async (req, res, next) => {
 });
 
 // TODO implement aggregation pipeline: get top <n> expensive orders
+exports.getTopNOrders = asyncWrapper(async (req, res, next) => {
+  const stats = await Order.aggregate([
+    {
+      $sort: { cost: -1 },
+    },
+    {
+      $project: {
+        user: 1,
+        cost: 1,
+      },
+    },
+    {
+      $limit: req.params.n * 1,
+    },
+  ]);
+
+  res.status(200).json({
+    status: '🟢 Success',
+    message: `List of top ${req.params.n} expensive orders retrieved successfully.`,
+    stats,
+  });
+});
+
+exports.getTimedTopNOrders = asyncWrapper(async (req, res, next) => {
+  const stats = await Order.aggregate([
+    {
+      $match: {
+        date: {
+          $gte: new Date(`${req.params.year}-${req.params.month}-01`),
+          $lte: new Date(`${req.params.year}-${req.params.month}-31`),
+        },
+      },
+    },
+    {
+      $sort: { cost: -1 },
+    },
+    {
+      $project: {
+        user: 1,
+        cost: 1,
+      },
+    },
+    {
+      $limit: req.params.n * 1,
+    },
+  ]);
+
+  res.status(200).json({
+    status: '🟢 Success',
+    message: `List of top ${req.params.n} expensive orders of month ${req.params.month} of year ${req.params.year} retrieved successfully.`,
+    stats,
+  });
+});
