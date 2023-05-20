@@ -61,13 +61,16 @@ orderSchema.pre('save', async function (next) {
   next();
 });
 
-// embed address
+// embed address + user id and name and phone
 orderSchema.pre('save', async function (next) {
   const user = await User.findById(this.user);
+
   const locationId = user.locations[user.activeAddress - 1];
-  this.location = await Location.findById(locationId).select(
-    'coordinates address'
+  const location = await Location.findById(locationId).select(
+    'location address'
   );
+  this.location.coordinates = location.location.coordinates;
+  this.location.address = location.address;
   next();
 });
 

@@ -31,6 +31,7 @@ exports.createOrder = asyncWrapper(async (req, res, next) => {
   const filteredBody = filterBody(req.body, 'items', 'amounts');
 
   filteredBody.user = req.user._id;
+
   const order = await Order.create(filteredBody);
 
   res.status(200).json({
@@ -53,6 +54,8 @@ exports.reviewOrder = asyncWrapper(async (req, res, next) => {
   Object.keys(filteredBody).forEach((field) => {
     order[field] = filteredBody[field];
   });
+
+  order.reviewedAt = Date.now();
 
   await order.save();
 

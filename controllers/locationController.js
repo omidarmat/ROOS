@@ -13,7 +13,7 @@ exports.getMyLocations = asyncWrapper(async (req, res, next) => {
 exports.addLocation = asyncWrapper(async (req, res, next) => {
   const filteredBody = filterBody(
     req.body,
-    'coordinates',
+    'location',
     'address',
     'description'
   );
@@ -48,7 +48,7 @@ exports.editLocation = asyncWrapper(async (req, res, next) => {
 
   const filteredBody = filterBody(
     req.body,
-    'coordinates',
+    'locations',
     'address',
     'description'
   );
@@ -90,5 +90,24 @@ exports.deleteLocation = asyncWrapper(async (req, res, next) => {
   res.status(204).json({
     status: '🟢 Success',
     message: 'Location removed successfully.',
+  });
+});
+
+exports.getUsersWithin = asyncWrapper(async (req, res, next) => {
+  const { distance } = req.params;
+  const radius = distance / 6378.1;
+  const locations = await Location.find({
+    location: {
+      $geoWithin: {
+        $centerSphere: [[process.env.BASE_LNG, process.env.BASE_LAT], radius],
+      },
+    },
+  });
+
+  res.status(200).json({
+    status: '🟢 Success.',
+    message: `All users within the ${distance}km radius of BASE are retrieved successfully.`,
+    results: locations.length,
+    locations,
   });
 });

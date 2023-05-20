@@ -19,6 +19,10 @@ router.route('/updateMyPassword').patch(userController.updateMyPassword);
 router.use('/myLocations', locationRouter);
 
 router
+  .route('/usersWithin/:distance')
+  .get(authController.authorize('admin'), locationController.getUsersWithin);
+
+router
   .route('/')
   .get(authController.authorize('admin'), userController.getAllUsers)
   .post(authController.authorize('admin'), userController.createUser);

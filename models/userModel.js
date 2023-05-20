@@ -124,15 +124,6 @@ userSchema.pre(/^find/, function (next) {
   next();
 });
 
-// populate user locations
-// userSchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: 'locations',
-//     select: '-user',
-//   });
-//   next();
-// });
-
 // COMMENT all instance methods
 // check current password for password update
 userSchema.methods.currentPasswordCheck = async function (
