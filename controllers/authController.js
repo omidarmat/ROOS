@@ -94,6 +94,8 @@ exports.protect = asyncWrapper(async (req, res, next) => {
   const decoded = await jwtVerifyPromise(token, process.env.JWT_SECRET);
 
   const encryptedUser = await User.findById(decoded.id);
+  encryptedUser.decryptUserData('name', 'phone');
+
   if (!encryptedUser)
     next(
       new appError(
@@ -113,9 +115,7 @@ exports.protect = asyncWrapper(async (req, res, next) => {
       )
     );
 
-  const decryptedUser = encryptedUser.decryptUserData('name', 'phone');
-
-  req.user = decryptedUser;
+  req.user = encryptedUser;
 
   console.log('🟢🟢 Protection passed.');
 

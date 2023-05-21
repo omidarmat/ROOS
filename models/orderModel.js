@@ -66,9 +66,9 @@ orderSchema.pre('save', async function (next) {
 orderSchema.pre('save', async function (next) {
   const encryptedUser = await User.findById(this.user);
 
-  const decryptedUser = encryptedUser.decryptUserData('phone', 'name');
+  encryptedUser.decryptUserData('phone', 'name');
 
-  const locationId = decryptedUser.locations[decryptedUser.activeAddress - 1];
+  const locationId = encryptedUser.locations[encryptedUser.activeAddress - 1];
   const location = await Location.findById(locationId).select(
     'location address'
   );
@@ -88,15 +88,18 @@ orderSchema.pre(/^find/, function (next) {
 });
 
 // FIXME needs to handle encryption/decryption DONE
-// CHECKME possible decryption error. not sure if a user doc is actually known as a mongoose doc, so not sure if this doc has access to its instance methods.
+// CHECKME possible decryption error. not sure if a user doc is actually known as a mongoose doc, so not sure if this doc has access to its instance methods. BUG
 orderSchema.post(/^find/, function (docs, next) {
   if (Array.isArray(docs)) {
-    docs.forEach((user) => {
-      user.decryptUserData('phone', 'name');
+    console.log('🟨', docs);
+    docs.forEach((order) => {
+      order.user.decryptUserData('phone', 'name');
     });
   } else {
-    docs.decryptUserData('phone', 'name');
+    console.log('🟨', docs);
+    docs.user.decryptUserData('phone', 'name');
   }
+  next();
 });
 
 // COMMENT instance methods

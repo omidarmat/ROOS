@@ -8,35 +8,36 @@ const signToken = require('./../utils/signToken');
 const globalCrypto = require('./../utils/globalCrypto');
 
 // FIXME needs to handle encryption/decryption DONE
-// CHECKME possible decryption error
+// CHECKME possible decryption error BUG DONE
 exports.getAllUsers = asyncWrapper(async (req, res) => {
   const encryptedUsers = await queryManager(User, req.query);
 
-  const decryptedUsers = encryptedUsers.map((user) => {
+  encryptedUsers.forEach((user) => {
     return user.decryptUserData('name', 'phone');
   });
 
   res.status(200).json({
     status: '🟢 Success',
     message: 'All user documents retrieved successfully.',
-    results: decryptedUsers.length,
+    results: encryptedUsers.length,
     data: {
-      decryptedUsers,
+      encryptedUsers,
     },
   });
 });
 
 // FIXME needs to handle encryption/decryption DONE
+// CHECKME possible decryption error BUG DONE
 exports.getUser = asyncWrapper(async (req, res) => {
   const encryptedUser = await User.findById(req.params.id);
 
-  const decryptedUser = encryptedUser.decryptUserData('name', 'phone');
+  encryptedUser.decryptUserData('name', 'phone');
 
   res.status(200).json({
     status: '🟢 Success',
     message: 'User document matched.',
     data: {
-      decryptedUser,
+      encryptedUser,
     },
   });
 });
@@ -67,6 +68,7 @@ exports.createUser = asyncWrapper(async (req, res) => {
 });
 
 // FIXME needs to handle encryption/decryption DONE
+// CHECKME possible decryption error BUG DONE
 exports.updateUser = asyncWrapper(async (req, res, next) => {
   if (req.body.password)
     return next(
@@ -78,6 +80,8 @@ exports.updateUser = asyncWrapper(async (req, res, next) => {
 
   const user = await User.findById(req.params.id);
 
+  user.decryptUserData('phone', 'name');
+
   const filteredBody = filterBody(
     req.body,
     'birthday',
@@ -87,12 +91,11 @@ exports.updateUser = asyncWrapper(async (req, res, next) => {
     'activeAddress'
   );
 
-  filteredBody.name = globalCrypto.cipherize(filteredBody.name);
-  filteredBody.phone = globalCrypto.cipherize(filteredBody.phone);
-
   Object.keys(filteredBody).forEach((field) => {
     user[field] = filteredBody[field];
   });
+
+  user.encryptUserData('phone', 'name');
 
   await user.save();
 
@@ -120,6 +123,7 @@ exports.getMe = (req, res, next) => {
 };
 
 // FIXME needs to handle encryption/decryption DONE
+// CHECKME possible decryption error BUG DONE
 exports.updateMe = asyncWrapper(async (req, res, next) => {
   if (req.body.password)
     return next(
@@ -130,6 +134,7 @@ exports.updateMe = asyncWrapper(async (req, res, next) => {
     return next(new appError('Cannot use this route to edit locations.', 403));
 
   const user = await User.findById(req.user._id);
+  user.decryptUserData('phone', 'name');
 
   const filteredBody = filterBody(
     req.body,
@@ -139,12 +144,11 @@ exports.updateMe = asyncWrapper(async (req, res, next) => {
     'activeAddress'
   );
 
-  filteredBody.name = globalCrypto.cipherize(filteredBody.name);
-  filteredBody.phone = globalCrypto.cipherize(filteredBody.phone);
-
   Object.keys(filteredBody).forEach((field) => {
     user[field] = filteredBody[field];
   });
+
+  user.encryptUserData('phone', 'name');
 
   await user.save();
 

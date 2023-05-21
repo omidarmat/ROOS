@@ -2,6 +2,7 @@ const asyncWrapper = require('./../utils/asyncWrapper');
 const filterBody = require('./../utils/filterBody');
 const appError = require('./../utils/appError');
 const queryManager = require('./../utils/queryManager');
+const globalCrypto = require('./../utils/globalCrypto');
 
 const Order = require('./../models/orderModel');
 const User = require('./../models/userModel');

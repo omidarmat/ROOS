@@ -29,6 +29,7 @@ exports.getMyLocations = asyncWrapper(async (req, res, next) => {
   });
 });
 
+// FIXME needs to handle encryption decryption DONE
 exports.addLocation = asyncWrapper(async (req, res, next) => {
   const filteredBody = filterBody(
     req.body,
@@ -43,6 +44,8 @@ exports.addLocation = asyncWrapper(async (req, res, next) => {
 
   req.user.locations.push(newLocation._id);
   req.user.activeAddress = req.user.locations.length;
+
+  req.user.encryptUserData('phone', 'name');
 
   await req.user.save();
 
