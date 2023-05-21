@@ -126,14 +126,19 @@ exports.calcTimedRatingAverage = asyncWrapper(async (req, res, next) => {
   });
 });
 
-// TODO implement aggregation pipeline: get top <n> expensive orders
+// FIXME needs to handle encryption/decryption DONE
+// CHECKME possible decryption error
 const populateUsers = async (stats) => {
   const usersPromise = stats.map(async (order) => {
     return await User.findById(order.user).select('name phone');
   });
-  const users = await Promise.all(usersPromise);
+  const encryptedUsers = await Promise.all(usersPromise);
 
-  users.forEach((user, i) => {
+  const decryptedUsers = encryptedUsers.map((user) => {
+    return user.decryptUserData('name', 'phone');
+  });
+
+  decryptedUsers.forEach((user, i) => {
     stats[i].user = user.name;
     stats[i].phone = user.phone;
   });

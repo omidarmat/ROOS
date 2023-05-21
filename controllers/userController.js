@@ -5,34 +5,57 @@ const User = require('./../models/userModel');
 const queryManager = require('./../utils/queryManager');
 const crypto = require('crypto');
 const signToken = require('./../utils/signToken');
+const globalCrypto = require('./../utils/globalCrypto');
 
+// FIXME needs to handle encryption/decryption DONE
+// CHECKME possible decryption error
 exports.getAllUsers = asyncWrapper(async (req, res) => {
-  const users = await queryManager(User, req.query);
+  const encryptedUsers = await queryManager(User, req.query);
+
+  const decryptedUsers = encryptedUsers.map((user) => {
+    return user.decryptUserData('name', 'phone');
+  });
 
   res.status(200).json({
     status: '🟢 Success',
     message: 'All user documents retrieved successfully.',
-    results: users.length,
+    results: decryptedUsers.length,
     data: {
-      users,
+      decryptedUsers,
     },
   });
 });
 
+// FIXME needs to handle encryption/decryption DONE
 exports.getUser = asyncWrapper(async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const encryptedUser = await User.findById(req.params.id);
+
+  const decryptedUser = encryptedUser.decryptUserData('name', 'phone');
 
   res.status(200).json({
     status: '🟢 Success',
     message: 'User document matched.',
     data: {
-      user,
+      decryptedUser,
     },
   });
 });
 
+// FIXME needs to handle encryption/decryption DONE
 exports.createUser = asyncWrapper(async (req, res) => {
-  const newUser = await User.create(req.body);
+  const filteredBody = filterBody(
+    req.body,
+    'name',
+    'phone',
+    'password',
+    'passwordConfirm',
+    'birthday'
+  );
+
+  filteredBody.name = globalCrypto.cipherize(filteredBody.name);
+  filteredBody.phone = globalCrypto.cipherize(filteredBody.phone);
+
+  const newUser = await User.create(filteredBody);
 
   res.status(200).json({
     status: '🟢 Success',
@@ -43,6 +66,7 @@ exports.createUser = asyncWrapper(async (req, res) => {
   });
 });
 
+// FIXME needs to handle encryption/decryption DONE
 exports.updateUser = asyncWrapper(async (req, res, next) => {
   if (req.body.password)
     return next(
@@ -62,6 +86,9 @@ exports.updateUser = asyncWrapper(async (req, res, next) => {
     'role',
     'activeAddress'
   );
+
+  filteredBody.name = globalCrypto.cipherize(filteredBody.name);
+  filteredBody.phone = globalCrypto.cipherize(filteredBody.phone);
 
   Object.keys(filteredBody).forEach((field) => {
     user[field] = filteredBody[field];
@@ -92,6 +119,7 @@ exports.getMe = (req, res, next) => {
   next();
 };
 
+// FIXME needs to handle encryption/decryption DONE
 exports.updateMe = asyncWrapper(async (req, res, next) => {
   if (req.body.password)
     return next(
@@ -110,6 +138,9 @@ exports.updateMe = asyncWrapper(async (req, res, next) => {
     'phone',
     'activeAddress'
   );
+
+  filteredBody.name = globalCrypto.cipherize(filteredBody.name);
+  filteredBody.phone = globalCrypto.cipherize(filteredBody.phone);
 
   Object.keys(filteredBody).forEach((field) => {
     user[field] = filteredBody[field];

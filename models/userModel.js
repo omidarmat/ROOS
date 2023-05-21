@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const globalCrypto = require('./../utils/globalCrypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -86,16 +87,16 @@ const userSchema = new mongoose.Schema({
 // CHECKME why doc considered new when updating user with unrelated key/value?
 
 // check phone number, should start with 0
-userSchema.pre('save', function (next) {
-  if (this.isNew || this.isModified('phone')) {
-    console.log('🟨 Document considered new.');
-    if (this.phone.startsWith('0')) return next();
-    this.phone = '0' + this.phone;
-    console.log('🟩 Zero added.');
-    console.log('🟩 final phone number:', this.phone);
-  }
-  next();
-});
+// userSchema.pre('save', function (next) {
+//   if (this.isNew || this.isModified('phone')) {
+//     console.log('🟨 Document considered new.');
+//     if (this.phone.startsWith('0')) return next();
+//     this.phone = '0' + this.phone;
+//     console.log('🟩 Zero added.');
+//     console.log('🟩 final phone number:', this.phone);
+//   }
+//   next();
+// });
 
 // encrypt password
 userSchema.pre('save', async function (next) {
@@ -157,6 +158,21 @@ userSchema.methods.createPasswordResetToken = function () {
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
   return resetToken;
+};
+
+// TODO encrypt user data (phone, name)
+userSchema.methods.encryptUserData = function (...fields) {
+  const encryptFields = fields;
+  encryptFields.forEach((field) => {
+    this[field] = globalCrypto.cipherize(this[field]);
+  });
+};
+
+userSchema.methods.decryptUserData = function (...fields) {
+  const decryptFields = fields;
+  decryptFields.forEach((field) => {
+    this[field] = globalCrypto.decipherize(this[field]);
+  });
 };
 
 const User = mongoose.model('User', userSchema);

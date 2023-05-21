@@ -7,6 +7,7 @@ const User = require('./../models/userModel');
 const filterBody = require('./../utils/filterBody');
 
 const signToken = require('./../utils/signToken');
+const globalCrypto = require('./../utils/globalCrypto');
 
 const jwtVerifyPromise = (token, jwtSecret) => {
   return new Promise(function (resolve, reject) {
@@ -20,6 +21,7 @@ const jwtVerifyPromise = (token, jwtSecret) => {
   });
 };
 
+// FIXME needs to handle encryption/decryption DONE
 exports.signup = asyncWrapper(async (req, res) => {
   const filteredBody = filterBody(
     req.body,
@@ -29,6 +31,9 @@ exports.signup = asyncWrapper(async (req, res) => {
     'password',
     'passwordConfirm'
   );
+
+  filteredBody.name = globalCrypto.cipherize(filteredBody.name);
+  filteredBody.phone = globalCrypto.cipherize(filteredBody.phone);
 
   const newUser = await User.create(filteredBody);
 
@@ -44,12 +49,17 @@ exports.signup = asyncWrapper(async (req, res) => {
   });
 });
 
+// FIXME needs to handle encryption/decryption DONE
 exports.login = asyncWrapper(async (req, res, next) => {
   const { phone, password } = req.body;
   if (!phone || !password)
     return next(new appError('Please provide phone number and password.'));
 
-  const user = await User.findOne({ phone }).select('+password');
+  const encryptedPhone = globalCrypto.cipherize(phone);
+
+  const user = await User.findOne({ phone: encryptedPhone }).select(
+    '+password'
+  );
 
   // check if no user or password not correct
   if (!user || !(await bcrypt.compare(password, user.password)))
@@ -66,6 +76,7 @@ exports.login = asyncWrapper(async (req, res, next) => {
   });
 });
 
+// FIXME needs to handle encryption/decryption DONE
 exports.protect = asyncWrapper(async (req, res, next) => {
   let token;
   if (
@@ -82,8 +93,8 @@ exports.protect = asyncWrapper(async (req, res, next) => {
 
   const decoded = await jwtVerifyPromise(token, process.env.JWT_SECRET);
 
-  const freshUser = await User.findById(decoded.id);
-  if (!freshUser)
+  const encryptedUser = await User.findById(decoded.id);
+  if (!encryptedUser)
     next(
       new appError(
         'This user does not exist anymore. You are not allowed to access this route.',
@@ -92,8 +103,8 @@ exports.protect = asyncWrapper(async (req, res, next) => {
     );
 
   if (
-    freshUser.passwordChangedAt &&
-    freshUser.passwordChangedAfterJWT(decoded.iat)
+    encryptedUser.passwordChangedAt &&
+    encryptedUser.passwordChangedAfterJWT(decoded.iat)
   )
     return next(
       new appError(
@@ -102,7 +113,9 @@ exports.protect = asyncWrapper(async (req, res, next) => {
       )
     );
 
-  req.user = freshUser;
+  const decryptedUser = encryptedUser.decryptUserData('name', 'phone');
+
+  req.user = decryptedUser;
 
   console.log('🟢🟢 Protection passed.');
 

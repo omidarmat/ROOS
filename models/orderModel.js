@@ -62,10 +62,13 @@ orderSchema.pre('save', async function (next) {
 });
 
 // embed address + user id and name and phone
+// FIXME needs to handle encryption/decryption DONE
 orderSchema.pre('save', async function (next) {
-  const user = await User.findById(this.user);
+  const encryptedUser = await User.findById(this.user);
 
-  const locationId = user.locations[user.activeAddress - 1];
+  const decryptedUser = encryptedUser.decryptUserData('phone', 'name');
+
+  const locationId = decryptedUser.locations[decryptedUser.activeAddress - 1];
   const location = await Location.findById(locationId).select(
     'location address'
   );
@@ -82,6 +85,18 @@ orderSchema.pre(/^find/, function (next) {
     select: 'name phone',
   });
   next();
+});
+
+// FIXME needs to handle encryption/decryption DONE
+// CHECKME possible decryption error. not sure if a user doc is actually known as a mongoose doc, so not sure if this doc has access to its instance methods.
+orderSchema.post(/^find/, function (docs, next) {
+  if (Array.isArray(docs)) {
+    docs.forEach((user) => {
+      user.decryptUserData('phone', 'name');
+    });
+  } else {
+    docs.decryptUserData('phone', 'name');
+  }
 });
 
 // COMMENT instance methods
