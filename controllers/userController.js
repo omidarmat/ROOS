@@ -3,6 +3,8 @@ const appError = require('./../utils/appError');
 const filterBody = require('./../utils/filterBody');
 const User = require('./../models/userModel');
 const queryManager = require('./../utils/queryManager');
+const crypto = require('crypto');
+const signToken = require('./../utils/signToken');
 
 exports.getAllUsers = asyncWrapper(async (req, res) => {
   const users = await queryManager(User, req.query);
@@ -151,7 +153,7 @@ exports.updateMyPassword = asyncWrapper(async (req, res, next) => {
     !(await user.currentPasswordCheck(req.body.currentPassword, user.password))
   )
     return next(new appError('Your current password is not correct.'));
-  console.log('🟢🟢 Current password check passed');
+  console.log('🟢🟢🟢 Current password check passed');
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
   await user.save();
@@ -170,3 +172,66 @@ exports.getMyLocations = (req, res) => {
     locations,
   });
 };
+
+exports.forgotPassword = asyncWrapper(async (req, res, next) => {
+  const { phone } = req.body;
+
+  const user = await User.findOne({ phone });
+
+  if (!user) {
+    return next(new appError('There is no user with this phone number.', 404));
+  }
+
+  const token = user.createPasswordResetToken();
+
+  await user.save();
+
+  res.status(200).json({
+    status: '🟢 Success',
+    message: 'Your password reset token has been sent to your email.',
+    token,
+  });
+});
+
+exports.resetPassword = asyncWrapper(async (req, res, next) => {
+  if (!req.headers.authorization) {
+    return next(new appError('You do not have any password reset token.', 403));
+  }
+
+  const encryptedToken = crypto
+    .createHash('sha256')
+    .update(req.headers.authorization.split(' ')[1])
+    .digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: encryptedToken,
+    // passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new appError('Invalid password reset token.', 403));
+  }
+
+  if (!user.passwordResetExpires > Date.now()) {
+    return next(new appError('Expired token.', 403));
+  }
+
+  const filteredBody = filterBody(req.body, 'password', 'passwordConfirm');
+
+  Object.keys(filteredBody).forEach((field) => {
+    user[field] = filteredBody[field];
+  });
+
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+
+  await user.save();
+
+  const token = signToken(user._id);
+
+  res.status(200).json({
+    status: '🟢 Success',
+    message: 'Password reset complete. You are now logged in.',
+    token,
+  });
+});

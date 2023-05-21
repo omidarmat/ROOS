@@ -6,6 +6,8 @@ const appError = require('./../utils/appError');
 const User = require('./../models/userModel');
 const filterBody = require('./../utils/filterBody');
 
+const signToken = require('./../utils/signToken');
+
 const jwtVerifyPromise = (token, jwtSecret) => {
   return new Promise(function (resolve, reject) {
     jwt.verify(token, jwtSecret, function (err, decoded) {
@@ -16,13 +18,6 @@ const jwtVerifyPromise = (token, jwtSecret) => {
       }
     });
   });
-};
-
-const signToken = (id) => {
-  const token = jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRATION,
-  });
-  return token;
 };
 
 exports.signup = asyncWrapper(async (req, res) => {
