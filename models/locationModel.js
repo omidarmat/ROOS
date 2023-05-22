@@ -23,6 +23,14 @@ const locationSchema = new mongoose.Schema({
   },
 });
 
+locationSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'user',
+    select: 'name phone',
+  });
+  next();
+});
+
 locationSchema.index({ location: '2dsphere' });
 
 const Location = mongoose.model('Location', locationSchema);

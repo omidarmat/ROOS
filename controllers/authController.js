@@ -7,6 +7,7 @@ const User = require('./../models/userModel');
 const filterBody = require('./../utils/filterBody');
 
 const signToken = require('./../utils/signToken');
+const globalCrypto = require('./../utils/globalCrypto');
 
 const jwtVerifyPromise = (token, jwtSecret) => {
   return new Promise(function (resolve, reject) {
@@ -49,7 +50,11 @@ exports.login = asyncWrapper(async (req, res, next) => {
   if (!phone || !password)
     return next(new appError('Please provide phone number and password.'));
 
-  const user = await User.findOne({ phone }).select('+password');
+  const encryptedPhone = globalCrypto.cipherize(phone);
+
+  const user = await User.findOne({ phone: encryptedPhone }).select(
+    '+password'
+  );
 
   // check if no user or password not correct
   if (!user || !(await bcrypt.compare(password, user.password)))

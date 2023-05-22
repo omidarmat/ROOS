@@ -5,6 +5,7 @@ const User = require('./../models/userModel');
 const queryManager = require('./../utils/queryManager');
 const crypto = require('crypto');
 const signToken = require('./../utils/signToken');
+const globalCrypto = require('./../utils/globalCrypto');
 
 exports.getAllUsers = asyncWrapper(async (req, res) => {
   const users = await queryManager(User, req.query);
@@ -176,7 +177,9 @@ exports.getMyLocations = (req, res) => {
 exports.forgotPassword = asyncWrapper(async (req, res, next) => {
   const { phone } = req.body;
 
-  const user = await User.findOne({ phone });
+  const encryptedPhone = globalCrypto.cipherize(phone);
+
+  const user = await User.findOne({ phone: encryptedPhone });
 
   if (!user) {
     return next(new appError('There is no user with this phone number.', 404));
