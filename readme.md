@@ -1,3 +1,3 @@
 # ROOS Application
 
-Built using modern technologies: NodeJS, Express, Mongoose and many more
+This is an API designed to serve both restaurant owners and customers to handle online orders.
